@@ -18,6 +18,10 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.concurrent.ThreadPoolExecutor;
 
+/**
+ * 거래(Transaction) 마이크로서비스의 진입점.
+ * 입금·출금·송금 처리를 담당하며, WebFlux·RabbitMQ·OpenFeign을 사용한다.
+ */
 @SpringBootApplication
 @EnableFeignClients
 @OpenAPIDefinition(info =
@@ -34,11 +38,16 @@ import java.util.concurrent.ThreadPoolExecutor;
 )
 @EnableRetry
 public class TransactionApplication {
+	/** 엔티티-DTO 변환을 위한 ModelMapper 빈을 등록한다. */
 	@Bean
 	public ModelMapper modelMapper(){
 		return new ModelMapper();
 	}
 
+	/**
+	 * 비동기 처리를 위한 스레드 풀 실행기 빈을 등록한다.
+	 * 코어 4개, 최대 10개 스레드, 큐 용량 60으로 구성된다.
+	 */
 	@Bean
 	public TaskExecutor getAsyncExecutor(){
 		ThreadPoolTaskExecutor executor=new ThreadPoolTaskExecutor();
@@ -60,6 +69,7 @@ public class TransactionApplication {
 //		return mapper;
 //	}
 
+	/** 애플리케이션을 시작한다. */
 	public static void main(String[] args) {
 		SpringApplication.run(TransactionApplication.class, args);
 	}

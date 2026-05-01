@@ -29,13 +29,19 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 		scheme = "bearer"
 )
 @EnableScheduling
+/**
+ * 대출(Loan) 마이크로서비스의 진입점.
+ * 은행 대출·P2P 대출 신청·승인·상환 처리를 담당하며 Eureka, RabbitMQ와 연동된다.
+ */
 public class LoanApplication {
 
+	/** 엔티티-DTO 변환을 위한 ModelMapper 빈을 등록한다. */
 	@Bean
 	public ModelMapper modelMapper(){
 		return new ModelMapper();
 	}
 
+	/** 애플리케이션을 시작한다. */
 	public static void main(String[] args) {
 		SpringApplication.run(LoanApplication.class, args);
 	}

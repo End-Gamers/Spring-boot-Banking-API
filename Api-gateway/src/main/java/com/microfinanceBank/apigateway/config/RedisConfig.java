@@ -51,12 +51,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+/**
+ * Redis 캐시 설정 클래스 (redisCache 프로파일 전용).
+ * Reactive Redis 연결 및 직렬화 컨텍스트를 구성한다.
+ */
 @Configuration
 @Profile("redisCache")
 @RequiredArgsConstructor
 public class RedisConfig {
 
-
+    /**
+     * CachedResponse 객체를 JSON으로 직렬화하는 ReactiveRedisOperations 빈을 등록한다.
+     *
+     * @param factory Reactive Redis 연결 팩토리
+     * @return String 키 / CachedResponse 값 형태의 Reactive Redis 연산 객체
+     */
     @Bean
     ReactiveRedisOperations<String, CachedResponse> redisOperations(ReactiveRedisConnectionFactory factory) {
         Jackson2JsonRedisSerializer<CachedResponse> serializer = new Jackson2JsonRedisSerializer<>(CachedResponse.class);

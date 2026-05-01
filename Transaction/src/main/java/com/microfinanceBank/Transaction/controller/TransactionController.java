@@ -39,6 +39,10 @@ import java.util.concurrent.CompletableFuture;
 import static com.microfinanceBank.Transaction.Config.RabbitMQDirectConfig.MAKING_DEPOSIT_ROUTING_TRANSACTION;
 
 
+/**
+ * 거래(Transaction) REST 컨트롤러.
+ * 입금(RabbitMQ 비동기), 출금·송금(WebFlux Reactive), 거래 내역 조회 API를 제공한다.
+ */
 @RestController
 @RequestMapping("/api/")
 @CrossOrigin(origins = "*",allowedHeaders = "*")
@@ -51,6 +55,11 @@ public class TransactionController {
     private  final AmqpTemplate amqpTemplate;
     private String baseUrl = "http://customer/api/transaction/";
 
+    /**
+     * 입금 요청을 RabbitMQ에 비동기로 발행한다.
+     * @param transaction 입금 정보 DTO
+     * @return 202 Accepted 응답
+     */
     @PostMapping("deposit")
     public Mono<ResponseEntity> deposit(@Valid @RequestBody TransactionDto transaction) {
 
@@ -59,6 +68,11 @@ public class TransactionController {
         return Mono.just(new ResponseEntity<>(HttpStatus.ACCEPTED));
     }
 
+    /**
+     * 출금 요청을 Customer 서비스에 WebClient로 전달한다. 최대 3회 재시도한다.
+     * @param transaction 출금 정보 DTO
+     * @return Customer 서비스 응답
+     */
     @PostMapping("withdraw")
     public Mono<ResponseEntity> withdraw(@Valid @RequestBody TransactionDto transaction){
         return webClient.build().post().uri(baseUrl.concat("withdraw"))
@@ -85,6 +99,11 @@ public class TransactionController {
                         .onRetryExhaustedThrow((retrySpec, retrySignal) -> new ServiceUnavailableException(retrySignal.failure().getMessage())))
                 .log();
     }
+    /**
+     * 송금 요청을 Customer 서비스에 WebClient로 전달한다. 최대 3회 재시도한다.
+     * @param transfer 송금 정보 DTO
+     * @return Customer 서비스 응답
+     */
     @PostMapping("transfer")
     public Mono<ResponseEntity> transfer(@Valid @RequestBody TransferTransactionDto transfer){
         return webClient.build().post().uri(baseUrl.concat("transfer"))
@@ -111,24 +130,28 @@ public class TransactionController {
                 .log();
     }
 
+    /** 성공 처리된 모든 입금 거래 목록을 조회한다. */
     @GetMapping("all-success-deposit")
     public ResponseEntity<CompletableFuture<List<DepositDto>>> findAllSuccessfulDepositsTransactions() {
         var result=transactionService.findAllSuccessfulDepositsTransactions();
         return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
+    /** 실패 처리된 모든 입금 거래 목록을 조회한다. */
     @GetMapping("all-failed-deposit")
     public ResponseEntity<CompletableFuture<List<DepositDto>>> findAllFailedDepositTransactions() {
         var result=transactionService.findAllFailedDepositTransactions();
         return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
+    /** 특정 계좌의 모든 거래 내역을 페이지네이션하여 조회한다. */
     @GetMapping("all-customer-transaction")
     public ResponseEntity<CompletableFuture<List<ITransaction>>> allCustomerTransactions(@RequestParam("id") Long accountNum,@RequestParam("offset") int offset,@RequestParam("size") int size) {
         var result=transactionService.allCustomerTransactions(accountNum,offset,size);
         return new ResponseEntity<>(result,HttpStatus.OK);
     }
 
+    /** SecurityContext에서 JWT Bearer 토큰 값을 추출한다. */
     private String getTokenValue(){
         var authentications = SecurityContextHolder.getContext().getAuthentication();
         var   principal= (Jwt)authentications.getPrincipal();

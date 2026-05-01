@@ -31,6 +31,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
+/**
+ * EmployeeService 구현체.
+ * Keycloak Admin API를 사용하여 직원 계정을 생성·삭제하고 역할을 관리한다.
+ */
 @Service
 @Slf4j
 @Transactional
@@ -233,6 +237,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return collect;
     }
 
+    /** Keycloak에 새 사용자를 생성하고 Response를 반환한다. */
     private Response createKeycloakUser(RegisterDto user) {
         log.trace("Entering method create createKeycloakUser");
         log.debug("Creating keycloak user for " + user.getEmail());
@@ -254,10 +259,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     }
 
+    /** Keycloak UsersResource 객체를 반환한다. */
     private UsersResource getKeycloakUserResource() {
         return getRealmResource().users();
     }
 
+    /** Keycloak RealmResource 객체를 반환한다. */
     private RealmResource getRealmResource() {
         log.debug("getting keycloak realm instance");
         return kcProvider.getInstance()
@@ -271,6 +278,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employee;
     }
 
+    /** 역할 변경 응답 DTO를 생성하여 반환한다. */
     private RegisterResponse roleResponse(Employee employee, String message) {
         RegisterResponse registerResponse = new RegisterResponse();
         registerResponse.setEmail(employee.getEmail());
@@ -281,6 +289,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
 
+    /** Employee 엔티티를 EmployeeDto로 변환한다. */
     private EmployeeDto convertEmployeeEntityToDto(Employee employee) {
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STANDARD);
         var employeeDto = new EmployeeDto();
@@ -288,6 +297,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeDto;
     }
 
+    /** Keycloak에서 이전 역할을 제거하고 ADMIN 역할을 부여한다. */
     private void makeAdminRepresentation(String keycloakId,Role role) {
         RealmResource realmResource = getRealmResource();
         var adminRole=roles.get(Role.ADMIN);
@@ -304,6 +314,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .findByClientId("front-end").get(0);
         return customerClient;
     }
+    /** RegisterDto를 Employee 엔티티로 변환한다. */
     private Employee convertRegisterDtoToEntity(RegisterDto registerDto) {
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STANDARD);
         Employee employee = modelMapper.map(registerDto, Employee.class);

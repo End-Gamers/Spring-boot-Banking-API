@@ -40,9 +40,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.isNull;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 
-/*
-This is a post filter (to perform cacheRepository and xss prevention on responses)
-
+/**
+ * Redis 캐시 및 XSS 방지 글로벌 필터 (redisCache 프로파일 전용).
+ * GET 요청 응답을 Redis에 30분간 캐싱하고, 응답 본문에서 XSS 위험 패턴을 제거한다.
+ * ADMIN 권한이 필요한 URL에 대해 역할 기반 접근 제어도 수행한다.
  */
 @Slf4j
 @Component
@@ -70,6 +71,11 @@ public class RedisCacheAndXssFilter implements GlobalFilter, Ordered {
         allowedUrls.put("/customer/api/account?accountNumber","ADMIN");
     }
 
+    /**
+     * 요청을 가로채어 Redis 캐시 조회, XSS 필터링, 권한 검사를 수행한다.
+     * ADMIN 전용 GET URL에 캐시된 응답이 있으면 Redis에서 즉시 반환하고,
+     * 없으면 다운스트림으로 요청을 전달한 뒤 응답을 캐시에 저장한다.
+     */
     @SneakyThrows
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -91,6 +97,7 @@ public class RedisCacheAndXssFilter implements GlobalFilter, Ordered {
         return  completeNormalRequestFlow(exchange,chain,cachedRequest,path);
     }
 
+    /** 응답을 가로채어 XSS 필터링 후 Redis에 저장하는 데코레이터를 반환한다. */
     private ServerHttpResponseDecorator getServerHttpResponse(ServerWebExchange exchange,CachedRequest cachedRequest,String path) {
         final var originalResponse = exchange.getResponse();
         final var dataBufferFactory = originalResponse.bufferFactory();
@@ -146,6 +153,7 @@ public class RedisCacheAndXssFilter implements GlobalFilter, Ordered {
         };
     }
 
+    /** 현재 요청이 HTTP GET 메서드인지 확인한다. */
     private static boolean isGetMethod(ServerWebExchange exchange) {
         boolean isGetMethod= exchange.getRequest().getMethodValue().equals("GET");
         return isGetMethod;
@@ -165,6 +173,7 @@ public class RedisCacheAndXssFilter implements GlobalFilter, Ordered {
     }
 
 
+    /** 바이트 배열에서 XSS 위험 패턴(스크립트 태그, eval 등)을 비동기로 제거한다. */
     @Async
     private byte[] xssReplaceDangerousContents(byte[] bytes) throws IOException {
         var data=new String(bytes);
@@ -175,6 +184,7 @@ public class RedisCacheAndXssFilter implements GlobalFilter, Ordered {
         return data.getBytes();
     }
 
+    /** JWT 토큰을 디코딩하여 사용자의 Realm 역할 집합을 반환한다. */
     private Set<String> userAuthorities(ServerWebExchange exchange){
         var path=exchange.getRequest().getPath().value();
         if (isSwaggerOrActuator(path))
@@ -203,6 +213,7 @@ public class RedisCacheAndXssFilter implements GlobalFilter, Ordered {
         return path.startsWith(SWAGGER_URL) || path.endsWith(SWAGGER_URL) || path.contains("actuator");
     }
 
+    /** Redis에서 가져온 캐시된 응답을 사용자에게 반환한다. 권한이 없으면 403 을 반환한다. */
     private Mono<Void> returnCachedResponse(ServerWebExchange exchange, String path, CachedResponse response){
         Set<String> userAuthorities =userAuthorities(exchange);
         final var cachedRequest = getCachedRequest(exchange.getRequest());
@@ -227,6 +238,7 @@ public class RedisCacheAndXssFilter implements GlobalFilter, Ordered {
         return exchange.getResponse().writeWith(Flux.just(buffer));
     }
 
+    /** 일반 요청 흐름을 완료한다: XSS 필터링 데코레이터를 적용하여 다운스트림 서비스로 요청을 전달한다. */
     private Mono<Void> completeNormalRequestFlow(ServerWebExchange exchange, GatewayFilterChain chain, CachedRequest cachedRequest, String path){
         final var mutatedHttpResponse = getServerHttpResponse(exchange, cachedRequest, path);
         mutatedHttpResponse.getHeaders().setContentType(MediaType.APPLICATION_JSON);

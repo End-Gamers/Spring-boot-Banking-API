@@ -21,6 +21,10 @@ import java.util.UUID;
 
 import static com.microfinanceBank.Loan.config.RabbitMQDirectConfig.LOAN_ANALYSIS_QUEUE;
 
+/**
+ * LoanService 구현체.
+ * 대출 신청 처리, UUID 기반 대출 ID 생성, RabbitMQ 위험도 분석 메시지 발행을 담당한다.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -79,6 +83,7 @@ public class LoanServiceImpl implements LoanService {
 
     }
 
+    /** 중복이 없는 UUID 기반 대출 ID를 생성한다. */
     private String generateLoanId() {
         String id= UUID.randomUUID().toString();
         var loan=loanRepository.existsById(id);

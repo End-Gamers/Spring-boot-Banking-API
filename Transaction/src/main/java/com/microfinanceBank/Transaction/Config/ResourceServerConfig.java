@@ -29,11 +29,19 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 
+/**
+ * OAuth2 리소스 서버 보안 설정 클래스.
+ * JWT 기반 인증, Stateless 세션, CSRF 비활성화, Swagger/Actuator 공개 경로를 구성한다.
+ */
 @Configuration
 //@EnableWebSecurity
 @EnableGlobalMethodSecurity(jsr250Enabled = true)
 @Slf4j
 public class ResourceServerConfig extends WebSecurityConfigurerAdapter{
+	/**
+	 * HTTP 보안 규칙을 구성한다.
+	 * Swagger, Actuator 경로는 공개하고, 나머지 요청은 JWT 인증을 요구한다.
+	 */
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 
@@ -56,6 +64,7 @@ public class ResourceServerConfig extends WebSecurityConfigurerAdapter{
 					.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()));
 	}
 
+	/** RealmRoleConverter를 사용하는 JWT 인증 컨버터를 반환한다. */
 	private Converter<Jwt, ? extends AbstractAuthenticationToken> jwtAuthenticationConverter() {
 		JwtAuthenticationConverter jwtConverter = new JwtAuthenticationConverter();
 		jwtConverter.setJwtGrantedAuthoritiesConverter(new RealmRoleConverter());

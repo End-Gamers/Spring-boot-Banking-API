@@ -12,9 +12,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+/**
+ * 거래 서비스 전역 예외 핸들러.
+ * AccountNotActive·InsufficientException·NoCustomerExceptions 등을 HTTP 응답으로 변환한다.
+ */
 @ControllerAdvice
 public class ApplicationExceptionHandler {
 
+    /** 계좌 비활성 예외를 403 응답으로 변환한다. */
     @ExceptionHandler(AccountNotActive.class)
     public ResponseEntity<Object> accountNotActive(AccountNotActive accountNotActive){
         HttpStatus status=HttpStatus.FORBIDDEN;

@@ -10,6 +10,10 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 
+/**
+ * 차용자(BorrowerDetails) 상세 정보 엔티티.
+ * 직업·이메일·월 수입·결혼 상태·자녀 수·생년월일 등 대출 심사 기준 정보를 저장한다.
+ */
 @Entity
 @AllArgsConstructor
 @Data

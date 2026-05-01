@@ -15,12 +15,17 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 
+/**
+ * 직원 서비스 OAuth2 리소스 서버 보안 설정 클래스.
+ * JWT 기반 인증, Stateless 세션, Swagger/Actuator 공개 경로를 구성한다.
+ */
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(jsr250Enabled = true)
 @Slf4j
 public class ResourceServerConfig extends WebSecurityConfigurerAdapter {
 
+	/** HTTP 보안 규칙을 구성한다. Swagger·Actuator는 공개하고 나머지는 JWT 인증을 요구한다. */
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http

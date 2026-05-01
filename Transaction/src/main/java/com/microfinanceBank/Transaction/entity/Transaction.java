@@ -14,6 +14,10 @@ import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Time;
 import java.time.LocalDate;
+/**
+ * 거래(Transaction) 기본 엔티티 (단일 테이블 상속 전략).
+ * Deposit·Withdraw·Transfer 자식 클래스를 TRANSACTION_TYPE 구분자 컬럼으로 구분한다.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

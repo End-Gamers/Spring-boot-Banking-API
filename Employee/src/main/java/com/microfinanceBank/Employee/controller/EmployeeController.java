@@ -19,6 +19,10 @@ import javax.annotation.security.RolesAllowed;
 import javax.validation.Valid;
 import java.util.List;
 
+/**
+ * 직원 관리 REST 컨트롤러.
+ * 직원 등록·삭제·관리자 승격·강등·목록 조회 API를 제공한다.
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api")
@@ -26,6 +30,7 @@ public class EmployeeController {
 
     private final EmployeeService employeeService;
 
+    /** 새 직원을 등록한다. HR 역할만 접근 가능하다. */
     @PostMapping("/employee")
     @RolesAllowed("hr")
     @Operation(summary = "Register employee",description = "Api available for only hr,managers and admin",tags = "Post")
@@ -41,6 +46,7 @@ public class EmployeeController {
     }
 
 
+    /** 직원을 삭제한다. HR 역할만 접근 가능하다. */
     @DeleteMapping("employee")
     @RolesAllowed("hr")
     @Operation(summary = "Delete employee",description = "Api available for only hr,managers and admin",tags = "Delete")
@@ -55,6 +61,7 @@ public class EmployeeController {
         employeeService.deleteEmployee(id,keycloakId);
         return new ResponseEntity <>( HttpStatus.OK);
     }
+    /** 특정 직원을 관리자로 승격한다. ADMIN 역할만 접근 가능하다. */
     @PutMapping("make-admin/{id}")
     @RolesAllowed("ADMIN")
     @Operation(summary = "make admin",description = "Api available for only  admins",tags = "Put")
@@ -69,6 +76,7 @@ public class EmployeeController {
     return  new ResponseEntity<>( employeeService.makeAdmin(id),HttpStatus.OK);
     }
 
+    /** 관리자를 일반 직원으로 강등한다. ADMIN 역할만 접근 가능하다. */
     @PutMapping("demote-admin/{id}")
     @RolesAllowed("ADMIN")
     @Operation(summary = "demote admin",description = "Api available for only admins",tags = "Put")

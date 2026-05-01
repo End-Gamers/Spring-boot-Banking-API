@@ -21,6 +21,10 @@ import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 
+/**
+ * TransactionService 구현체.
+ * 거래 조회 로직을 비동기 CompletableFuture로 처리한다.
+ */
 @Service
 @Slf4j
 @AllArgsConstructor
@@ -32,7 +36,7 @@ public class TransactionServiceImpl implements TransactionService{
 
     Executor executor =Executors.newFixedThreadPool(10);
 
-
+    /** 성공 처리된 모든 입금 거래를 비동기로 조회하여 DTO 목록으로 변환한다. */
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<List<DepositDto>> findAllSuccessfulDepositsTransactions() {
@@ -47,6 +51,7 @@ public class TransactionServiceImpl implements TransactionService{
                         .collect(Collectors.toList()), executor);
     }
 
+    /** 실패 처리된 모든 입금 거래를 비동기로 조회하여 DTO 목록으로 변환한다. */
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<List<DepositDto>> findAllFailedDepositTransactions() {
@@ -58,6 +63,7 @@ public class TransactionServiceImpl implements TransactionService{
                  .thenApplyAsync(data->data.stream().map(this::convertDepositEntityToDto).collect(Collectors.toList()), executor);
     }
 
+    /** 특정 계좌의 모든 거래 내역을 페이지네이션하여 비동기로 조회한다. */
     @Override
     @Transactional(readOnly = true)
     public CompletableFuture<List<ITransaction>> allCustomerTransactions(Long accountNum,int offset, int size) {

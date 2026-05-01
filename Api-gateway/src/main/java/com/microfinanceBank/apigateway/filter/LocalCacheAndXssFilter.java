@@ -37,9 +37,11 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang.StringUtils.EMPTY;
 
-/*
-This is a post filter (to perform cache and xss prevention on responses)
-
+/**
+ * 로컬 캐시 및 XSS 방지 글로벌 필터 (localCache 프로파일 전용).
+ * GET 요청 응답을 로컬 ConcurrentMap 캐시에 저장하고,
+ * 응답 본문에서 XSS 위험 패턴을 제거한다.
+ * ADMIN 권한이 필요한 URL에 대해 역할 기반 접근 제어도 수행한다.
  */
 @Slf4j
 @Component
@@ -64,6 +66,10 @@ public class LocalCacheAndXssFilter implements GlobalFilter, Ordered {
 
     }
 
+    /**
+     * 요청을 가로채어 캐시 조회, XSS 필터링, 권한 검사를 수행한다.
+     * 캐시에 응답이 있으면 저장된 데이터를 즉시 반환하고, 없으면 다운스트림 서비스로 요청을 전달한다.
+     */
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         System.out.println("ccccccccccccccccccc");
@@ -102,6 +108,7 @@ public class LocalCacheAndXssFilter implements GlobalFilter, Ordered {
     }
 
 
+    /** 응답을 가로채어 XSS 필터링 후 캐시에 저장하는 데코레이터를 반환한다. */
     private ServerHttpResponseDecorator getServerHttpResponse(ServerWebExchange exchange, Cache cache, CachedRequest cachedRequest,String path) {
         final var originalResponse = exchange.getResponse();
         final var dataBufferFactory = originalResponse.bufferFactory();
@@ -160,11 +167,13 @@ public class LocalCacheAndXssFilter implements GlobalFilter, Ordered {
         };
     }
 
+    /** 필터 실행 순서를 반환한다. 값이 낮을수록 먼저 실행된다. */
     @Override
     public int getOrder() {
         return -2;
     }
 
+    /** HTTP 요청 정보를 캐시 키 객체로 변환한다. */
     private CachedRequest getCachedRequest(ServerHttpRequest request) {
         return CachedRequest.builder()
                 .method(request.getMethod())
@@ -175,6 +184,7 @@ public class LocalCacheAndXssFilter implements GlobalFilter, Ordered {
 
 
 
+    /** 바이트 배열에서 XSS 위험 패턴(스크립트 태그, eval 등)을 제거한다. */
     private byte[] xssReplaceDangerousContents(byte[] bytes) throws IOException {
 
         var data=new String(bytes);
@@ -185,6 +195,7 @@ public class LocalCacheAndXssFilter implements GlobalFilter, Ordered {
 
         return data.getBytes();
     }
+    /** JWT 토큰을 디코딩하여 사용자의 역할(Realm Role) 집합을 반환한다. */
     private Set<String> userAuthorities(ServerWebExchange exchange){
         var path=exchange.getRequest().getPath().value();
         if (path.startsWith(swaggerUrl) || path.endsWith(swaggerUrl) || path.contains("actuator") )
@@ -196,6 +207,7 @@ public class LocalCacheAndXssFilter implements GlobalFilter, Ordered {
     }
 
 
+    /** JWT의 realm_access.roles 클레임에서 역할 목록을 Set으로 변환한다. */
     public Set<String> convert(Jwt jwt) {
         final Map<String, List<String>> realmAccess = (Map<String, List<String>>) jwt.getClaims().get("realm_access");
         return realmAccess.get("roles")

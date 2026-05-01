@@ -6,11 +6,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+/**
+ * API 게이트웨이 공통 상수 유틸리티 클래스.
+ * XSS 방지를 위한 정규식 패턴 목록을 정의한다.
+ */
 public class ConstantUtil {
 
+  /**
+   * XSS 필터에서 제거할 위험 패턴 목록.
+   * 스크립트 태그, eval(), javascript: URI, src 속성, vbscript: 등을 포함한다.
+   */
   public static final Set<Pattern> FILTER_PATTERNS = Set.of(
 
-          // Avoid common html tags
+          // 일반적인 HTML 태그 제거
           Pattern.compile("(<input(.*?)></input>|<input(.*)/>)", Pattern.CASE_INSENSITIVE),
           Pattern.compile("<span(.*?)</span>", Pattern.CASE_INSENSITIVE),
           Pattern.compile("<div(.*)</div>", Pattern.CASE_INSENSITIVE),

@@ -16,6 +16,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * 대출(Loan) 기본 엔티티 (단일 테이블 상속 전략).
+ * BankLoan·PeerToPeer 자식 클래스를 LOAN_TYPE 구분자 컬럼으로 구분한다.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -76,6 +80,7 @@ public class Loan implements Serializable {
     protected String loanType;
 
 
+    /** 상환 기록을 추가하고 양방향 관계를 설정한다. */
     public void addPayments(LoanPayments payment){
             if (payment!=null){
                 if (this.payments==null)

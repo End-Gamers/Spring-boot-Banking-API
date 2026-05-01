@@ -28,6 +28,10 @@ import java.util.logging.Level;
 
 import static com.microfinanceBank.Issues.entity.Issues.SEQUENCE_NAME;
 
+/**
+ * IssueService 구현체.
+ * MongoDB Reactive를 사용하여 불만사항을 관리한다.
+ */
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -92,6 +96,7 @@ public class IssueServiceImpl implements IssueService {
         return issueRepository.findByAccountNumber(accountNumber);
     }
 
+    /** ComplainDto를 Issues 엔티티로 변환하고 초기 상태(PENDING)를 설정한다. */
     private Issues convertComplaintDtoToEntity(ComplainDto complainDto){
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STANDARD);
         Issues issues=modelMapper.map(complainDto,Issues.class);
@@ -101,6 +106,7 @@ public class IssueServiceImpl implements IssueService {
         issues.setId(sequenceGeneratorService.getSequenceNumber(SEQUENCE_NAME));
         return  issues;
     }
+    /** Issues 엔티티를 IssueDto로 변환한다. */
     private IssueDto convertEntityToIssueDto(Issues issue){
         modelMapper.getConfiguration().setMatchingStrategy(MatchingStrategies.STANDARD);
         IssueDto issues=modelMapper.map(issue,IssueDto.class);

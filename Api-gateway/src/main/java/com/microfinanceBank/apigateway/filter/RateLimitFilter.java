@@ -16,6 +16,11 @@ import java.time.Duration;
 
 import static java.util.Objects.isNull;
 
+/**
+ * Redis 기반 API 속도 제한 필터 (redisCache 프로파일 전용).
+ * 사용자별(Keycloak ID + 서비스명) 초당 요청 횟수를 Redis에 추적하여
+ * 설정된 한도(REQUEST_PER_SECOND)를 초과하면 429 Too Many Requests 를 반환한다.
+ */
 @Component
 @Slf4j
 @Profile("redisCache")
@@ -58,6 +63,7 @@ public class RateLimitFilter extends AbstractGatewayFilterFactory<RateLimitFilte
                 })).zipWith(incrementApiHitCount(ops,userId)).then();
             },-2);
         }
+    /** 요청 헤더(X-Keycloak-Id)에서 Keycloak 사용자 ID를 추출한다. */
     private String getKeycloakId(ServerWebExchange exchange){
         var id=exchange.getRequest().getHeaders().get("X-Keycloak-Id");
         return isNull(id)?"null":id.get(0);
@@ -83,12 +89,13 @@ public class RateLimitFilter extends AbstractGatewayFilterFactory<RateLimitFilte
         return ops.increment(userId).zipWith(redisTemplate.expire(userId,Duration.ofSeconds(1))).hasElement();
 
     }
+    /** 경로가 Swagger 또는 Actuator 엔드포인트인지 확인한다. 해당 경로는 속도 제한에서 제외된다. */
     private boolean isSwaggerOrActuator(String path){
         return path.startsWith(SWAGGER_URL) || path.endsWith(SWAGGER_URL) || path.contains("actuator");
     }
 
+    /** RateLimitFilter 설정 내부 클래스. 추가 설정 프로퍼티를 여기에 정의한다. */
     public static class Config {
-            // Put the configuration properties
 
         public Config() {
         }

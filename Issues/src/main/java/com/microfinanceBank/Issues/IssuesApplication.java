@@ -23,13 +23,19 @@ import org.springframework.data.mongodb.repository.config.EnableReactiveMongoRep
 		bearerFormat = "JWT",
 		scheme = "bearer"
 )
+/**
+ * 불만사항(Issues) 마이크로서비스의 진입점.
+ * MongoDB 기반 Reactive 스트림으로 고객 불만사항을 처리한다.
+ */
 public class IssuesApplication {
 
+	/** 엔티티-DTO 변환을 위한 ModelMapper 빈을 등록한다. */
 	@Bean
 	public ModelMapper modelMapper(){
 		return new ModelMapper();
 	}
 
+	/** 애플리케이션을 시작한다. */
 	public static void main(String[] args) {
 		SpringApplication.run(IssuesApplication.class, args);
 	}

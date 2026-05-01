@@ -14,9 +14,14 @@ import org.springframework.data.repository.query.Param;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * 거래(Transaction) 데이터 접근 레포지토리.
+ * 성공/실패 입금 조회 및 계좌별 전체 거래 내역 페이지네이션 쿼리를 제공한다.
+ */
 //@NoRepositoryBean
 public interface TransactionRepository extends JpaRepository<Transaction,Long> {
 
+    /** 특정 유형에서 성공 처리된 거래 목록을 조회한다. */
     @Query("select t from Transaction t " +
             "join fetch t.transactionDetail td " +
             "where t.transactionType= :type and " +

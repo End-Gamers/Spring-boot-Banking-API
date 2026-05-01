@@ -11,9 +11,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+/**
+ * 직원 서비스 전역 예외 핸들러.
+ * EmployeeAlreadyExists·NoEmployeeExceptions를 HTTP 응답으로 변환한다.
+ */
 @ControllerAdvice
 public class ApplicationExceptionHandler {
 
+    /** 직원 중복 예외를 409 응답으로 변환한다. */
     @ExceptionHandler(EmployeeAlreadyExists.class)
     public ResponseEntity<Object> employeeAlreadyExists(EmployeeAlreadyExists employeeAlreadyExists){
         HttpStatus status=HttpStatus.CONFLICT;

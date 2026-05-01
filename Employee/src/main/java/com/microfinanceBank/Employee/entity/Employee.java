@@ -17,16 +17,22 @@ import java.util.HashSet;
 import java.util.List;
 //import java.util.Collections;
 
+/**
+ * 직원(Employee) 엔티티.
+ * 직원의 개인정보·역할·소속 지점·부서·활성 상태를 관리한다.
+ */
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Employee {
+    /** 직원 ID (기본키). */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(nullable = false, updatable = false,name = "emp_id",unique = true)
     private Long id;
 
+    /** Keycloak에서 발급된 고유 사용자 ID. */
     @Column(updatable = false,unique = true,nullable = false)
     private String keycloakId;
     @Column(nullable = false)
@@ -59,6 +65,7 @@ public class Employee {
     private boolean isActive;
     private boolean isNotLocked;
 
+    /** 직원을 지점에 배정하고 양방향 관계를 설정한다. */
     public void addBranch(Branch branch){
         if (branch !=null){
             this.branch=branch;

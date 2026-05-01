@@ -14,6 +14,10 @@ import org.springframework.context.annotation.Profile;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Swagger / OpenAPI 문서 설정 클래스 (프로덕션 환경 제외).
+ * Gateway에 등록된 라우트를 기반으로 각 마이크로서비스별 API 그룹을 자동 생성한다.
+ */
 @RequiredArgsConstructor
 @Configuration
 @Profile("!prod")
@@ -21,6 +25,14 @@ import java.util.List;
 public class SwaggerOpenApiConfig {
     private final RouteDefinitionLocator locator;
 
+    /**
+     * Gateway 라우트 정의에서 "-service" 로 끝나는 라우트를 읽어
+     * Swagger UI에 마이크로서비스별 API 그룹을 등록한다.
+     *
+     * @param swaggerUiConfigParameters Swagger UI 파라미터
+     * @param locator                   라우트 정의 로케이터
+     * @return GroupedOpenApi 목록
+     */
     @Bean
     @Lazy(false)
     public List<GroupedOpenApi> apis(SwaggerUiConfigParameters swaggerUiConfigParameters, RouteDefinitionLocator locator) {

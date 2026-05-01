@@ -12,6 +12,10 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+/**
+ * 대출 상환 처리 서비스 구현체.
+ * 잔여 원금을 차감하고 완납 여부를 판단하며 상환 기록을 저장한다.
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

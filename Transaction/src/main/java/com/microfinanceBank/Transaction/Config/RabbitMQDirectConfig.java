@@ -18,13 +18,18 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 
+/**
+ * RabbitMQ Direct Exchange 및 큐 설정 클래스.
+ * 입금 처리에 사용되는 "MakingDepositQueue"와 "direct-exchange"를 구성한다.
+ */
 @Configuration
 @EnableRabbit
 public class RabbitMQDirectConfig implements RabbitListenerConfigurer {
 
+	/** 입금 처리 라우팅 키. */
 	public static final String MAKING_DEPOSIT_ROUTING_TRANSACTION="making.deposit.transaction";
 
-
+	/** 입금 요청을 수신하는 RabbitMQ 큐를 생성한다. */
 	@Bean
 	Queue MakingDepositQueue() {
 		return new Queue("MakingDepositQueue", false);
@@ -45,11 +50,13 @@ public class RabbitMQDirectConfig implements RabbitListenerConfigurer {
 //	}
 
 
+	/** "direct-exchange" Direct Exchange를 생성한다. */
 	@Bean
 	DirectExchange exchange() {
 		return new DirectExchange("direct-exchange");
 	}
 
+	/** MakingDepositQueue를 direct-exchange에 라우팅 키로 바인딩한다. */
 	@Bean
 	Binding MakingDepositBinding(Queue MakingDepositQueue, DirectExchange exchange) {
 		return BindingBuilder.bind(MakingDepositQueue).to(exchange).with(MAKING_DEPOSIT_ROUTING_TRANSACTION);
