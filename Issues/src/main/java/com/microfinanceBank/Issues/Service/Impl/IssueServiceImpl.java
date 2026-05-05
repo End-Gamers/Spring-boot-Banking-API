@@ -49,7 +49,7 @@ public class IssueServiceImpl implements IssueService {
         return Mono.just(convertComplaintDtoToEntity(complainDto))
                 .flatMap(issueRepository::save)
                 .log("successfully issued complaint ", Level.INFO)
-                .thenReturn(new IssueResponse("Complaint Successfully submitted"));
+                .thenReturn(new IssueResponse("불만사항이 성공적으로 접수되었습니다."));
 
     }
 
@@ -64,13 +64,13 @@ public class IssueServiceImpl implements IssueService {
         log.trace("entering method fixIssue");
         Mono<Issues> issue= issueRepository.findById(id);
         return issue
-                .switchIfEmpty(Mono.error(new NoIssueFound("No issue found for id "+id)))
+                .switchIfEmpty(Mono.error(new NoIssueFound("해당 ID의 불만사항을 찾을 수 없습니다: "+id)))
                 .doOnNext(x->{
                     log.debug("fixing issue id {}",x.getId());
                     x.setStatus(IssueStatus.FIXED);
                 })
                 .flatMap(issueRepository::save)
-                .thenReturn(new IssueResponse("Issue fixed Successfully"));
+                .thenReturn(new IssueResponse("불만사항이 성공적으로 처리되었습니다."));
     }
 
     @Override

@@ -10,7 +10,7 @@ public class LoginDto {
 
     @NotNull
     private String password;
-    @Email(message = "Please enter a valid email address")
+    @Email(message = "올바른 이메일 주소를 입력해 주세요.")
     @NotNull
     private String email;
 

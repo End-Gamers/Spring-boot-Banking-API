@@ -99,7 +99,7 @@ public class CustomerServiceImpl implements CustomerService {
         }
         else if (keycloakUser.getStatus()==409) {
             log.error("Customer with email {} already exists",customer.getEmail());
-            throw new CustomerAlreadyExists("Customer with email already exists");
+            throw new CustomerAlreadyExists("이미 등록된 이메일 주소입니다.");
 
         }
         else

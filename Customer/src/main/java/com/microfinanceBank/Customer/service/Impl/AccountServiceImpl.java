@@ -36,7 +36,7 @@ public class AccountServiceImpl implements AccountService {
     public AccountDto getAccountByAccountNumber(Long accountNumber){
         log.trace("Entering method getCustomerByAccountNumber");
         log.debug("Getting customer with account number --> {} ",accountNumber);
-        String message="No account number found for id: ".concat(accountNumber.toString()).concat(" ");
+        String message="해당 계좌 번호를 찾을 수 없습니다: ".concat(accountNumber.toString());
         return accountRepository.findById(accountNumber).map(this::convertAccountEntityToDto)
                 .orElseThrow(() ->{
                     log.error("No account number found for id: {}",accountNumber);
@@ -64,7 +64,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountDto createAccount(AccountType accountType, Long customerId) {
         Customer customer= customerRepository.findById(customerId)
-                .orElseThrow(()->new NoCustomerExceptions("No customer with account number: "+customerId));
+                .orElseThrow(()->new NoCustomerExceptions("해당 고객 ID를 찾을 수 없습니다: "+customerId));
         Account account=new Account();
         account.setAccountType(accountType);
         account.setStatus(Status.ACTIVE);

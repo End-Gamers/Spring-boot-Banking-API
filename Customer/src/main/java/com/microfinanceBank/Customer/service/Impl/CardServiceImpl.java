@@ -41,7 +41,7 @@ public class CardServiceImpl implements CardService {
         var account=accountRepository.findById(cardRequest.getAccountNumber()).get();
         if (account.getAccountBalance().compareTo(CARD_CHARGES)<=0){
             log.error("Insufficient funds to request card for customer with id {}",id);
-            throw new InsufficientException("Insufficient Funds!!");
+            throw new InsufficientException("잔액이 부족합니다.");
         }
         account.setAccountBalance(account.getAccountBalance().subtract(CARD_CHARGES));
         var debitCardEntity=new DebitCard();
@@ -60,7 +60,7 @@ public class CardServiceImpl implements CardService {
 
         var withdrawQueue=TransactionDto.builder().locationDto(new LocationDto("fcmb","head quarter"))
                         .amount(CARD_CHARGES)
-                                .description("Debit card request charges")
+                                .description("직불카드 발급 수수료")
                                         .sourceAccount(cardRequest.getAccountNumber())
                                                 .build();
 

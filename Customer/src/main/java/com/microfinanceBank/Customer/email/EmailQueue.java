@@ -38,18 +38,18 @@ public class EmailQueue {
     private Response happyBirthDayMail(Customer customer) {
         String name=customer.getFirstName().concat(" ").concat(customer.getLastName());
         StringBuilder message=new StringBuilder();
-        message.append("<h5>").append("Hurray!!! Happy Birthday ")
-                .append(name).append(".Many more years to come dear");
-        message.append("<h6>").append("May lines begin to fall for you in pleasant places as from ")
-                .append(customer.getCustomerDetails().getDob()).append(".Enjoy your day!!");
+        message.append("<h5>").append("생일을 진심으로 축하드립니다, ")
+                .append(name).append("님! 앞으로도 건강하고 행복한 나날이 가득하시길 바랍니다.");
+        message.append("<h6>").append("")
+                .append(customer.getCustomerDetails().getDob()).append(" 이후로도 항상 좋은 일들이 가득하시길 바랍니다. 즐거운 하루 보내세요!");
 
-        EmailRequest emailRequest=new EmailRequest(customer.getEmail(),"Hurray!!!",message.toString() );
+        EmailRequest emailRequest=new EmailRequest(customer.getEmail(),"생일 축하합니다!",message.toString() );
         com.sendgrid.Response response=emailservice.sendEmail(emailRequest);
         return response;
     }
 
     private com.sendgrid.Response getWelcomeMailResponse(CustomerDto customer) {
-        EmailRequest emailRequest=new EmailRequest(customer.getEmail(),"Welcome","Account Successfully created");
+        EmailRequest emailRequest=new EmailRequest(customer.getEmail(),"가입을 환영합니다","계좌가 성공적으로 개설되었습니다.");
         com.sendgrid.Response response=emailservice.sendEmail(emailRequest);
         return response;
     }

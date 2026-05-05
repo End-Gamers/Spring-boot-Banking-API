@@ -101,10 +101,10 @@ public class EmployeeServiceImpl implements EmployeeService {
             registerResponse.setId(saved.getId());
             registerResponse.setName(name);
             registerResponse.setEmail(user.getEmail());
-            registerResponse.setMessage("Employee successfully created");
+            registerResponse.setMessage("직원이 성공적으로 등록되었습니다.");
             registerResponse.setKeycloakId(employeeEntity.getKeycloakId());
         } else if (keycloakUser.getStatus() == 409)
-            throw new EmployeeAlreadyExists("Employee already exists");
+            throw new EmployeeAlreadyExists("이미 등록된 직원입니다.");
         return registerResponse;
     }
 
@@ -164,7 +164,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public RegisterResponse makeAdmin(Long id) {
         log.trace("Entering method make admin");
-        String message = "Congratulations!! You have been made an Admin!!";
+        String message = "축하합니다! 관리자로 승격되었습니다.";
         Employee employee = employeeRepository.getById(id);
 
         log.debug("making admin employee id {} ",employee.getId());
@@ -182,7 +182,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     public RegisterResponse demoteAdminToEmployee(Long id) {
         log.trace("entering method demoteAdminToEmployee");
-        String message = "Successfully demoted to Employee";
+        String message = "일반 직원으로 강등되었습니다.";
 
         Employee employee = employeeRepository.getById(id);
         log.debug("oereparing to demote admin to employee {}",employee.getId());
@@ -274,7 +274,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public Employee getEmployeeByEmail(String email) {
         log.debug("getting employees by email {}",email);
         Employee employee = employeeRepository.findByEmail(email)
-                .orElseThrow(() -> new NoEmployeeExceptions("No user with the email "));
+                .orElseThrow(() -> new NoEmployeeExceptions("해당 이메일 주소의 직원을 찾을 수 없습니다."));
         return employee;
     }
 

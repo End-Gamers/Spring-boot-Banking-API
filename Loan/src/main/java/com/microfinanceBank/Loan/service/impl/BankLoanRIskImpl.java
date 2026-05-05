@@ -121,7 +121,7 @@ public class BankLoanRIskImpl implements BankLoanRisk {
         if (monthlyPayment.compareTo(BigDecimal.valueOf(amountLeftAfterExpenses))>=0){
             unApprovedLoan=UnApprovedLoans.builder()
                     .loanId(loan.getLoanId())
-                    .reasons(Collections.singleton("Failed worthiness analysis"))
+                    .reasons(Collections.singleton("대출 적합성 분석 실패"))
                     .build();
                 unApprovedLoansRepository.save(unApprovedLoan);
                 loan.setStatus(LoanStatus.REJECTED);
@@ -146,7 +146,7 @@ public class BankLoanRIskImpl implements BankLoanRisk {
         var age=ChronoUnit.YEARS.between(applicantDob,todayDate);
 
         if (age<18){
-            throw new UnderAgeException("Applicant must be at least 18 years old at the time of application ");
+            throw new UnderAgeException("대출 신청인은 만 18세 이상이어야 합니다.");
         }
 
         var amountLeftAfterExpenses =

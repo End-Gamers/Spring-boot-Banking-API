@@ -51,7 +51,7 @@ public class RateLimitFilter extends AbstractGatewayFilterFactory<RateLimitFilte
                     if (value.intValue()>=REQUEST_PER_SECOND && !isSwaggerOrActuator(path)){
                         log.info("User with keycloak  id {} has exceeded configured per day api limit. ",keycloakId);
                         exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
-                        exchange.getResponse().getHeaders().add("message","User limit has been exceeded");
+                        exchange.getResponse().getHeaders().add("message","API 요청 한도를 초과했습니다. 잠시 후 다시 시도해 주세요.");
                         return exchange.getResponse().setComplete();
                     }
                     return chain.filter(exchange);

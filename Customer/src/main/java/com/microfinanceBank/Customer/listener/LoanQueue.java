@@ -85,8 +85,8 @@ public class LoanQueue {
 
             var withdraw= TransactionDto.builder()
                     .amount(amountWithdrawn)
-                    .description("Loan settlement")
-                    .locationDto(new LocationDto("microfinance bank","head quarter"))
+                    .description("대출금 자동 상환")
+                    .locationDto(new LocationDto("마이크로파이낸스 은행","본점"))
                     .sourceAccount(cronJobQueueDto.getBorrowerAccountNumber()).build();
             repository.save(account);
             amqpTemplate.convertAndSend(directExchange.getName(), WITHDRAWAL_ROUTING_TRANSACTION, generateTransactionDetailsQueue.withdrawQueue(withdraw, TransactionStatus.SUCCESS));
