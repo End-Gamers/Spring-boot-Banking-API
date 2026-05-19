@@ -1,0 +1,107 @@
+# ===========================
+# 빌드 산출물
+# ===========================
+target/
+build/
+out/
+*.jar
+*.war
+*.ear
+*.class
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ===========================
+# IDE — IntelliJ IDEA
+# ===========================
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dictionaries/
+.idea/shelf/
+.idea/libraries/
+.idea/modules.xml
+.idea/*.iml
+*.iws
+*.iml
+*.ipr
+
+# ===========================
+# IDE — Eclipse / STS
+# ===========================
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+# ===========================
+# IDE — VS Code
+# ===========================
+.vscode/
+
+# ===========================
+# IDE — NetBeans
+# ===========================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# ===========================
+# Claude Code
+# ===========================
+.claude/
+
+# ===========================
+# macOS
+# ===========================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ===========================
+# 로그 파일
+# ===========================
+*.log
+logs/
+erl_crash.dump
+
+# ===========================
+# 환경 변수 / 시크릿
+# ===========================
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.p12
+*.jks
+
+# ===========================
+# Kubernetes Secrets (민감 정보 포함)
+# ===========================
+rabbitmq/rabbit-secret.yml
+**/k8s/*secret*
+**/kubernetes/*secret*
+
+# ===========================
+# Maven
+# ===========================
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# ===========================
+# Spring Boot
+# ===========================
+spring-shell.log
