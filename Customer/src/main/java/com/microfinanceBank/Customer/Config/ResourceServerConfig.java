@@ -21,11 +21,7 @@ import org.springframework.security.web.authentication.session.NullAuthenticated
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 
-<<<<<<< HEAD
-@EnableWebSecurity(debug = true)
-=======
 @EnableWebSecurity
->>>>>>> 3042050908729fcb60132c5fbfdbb6f52055d03b
 @EnableGlobalMethodSecurity(jsr250Enabled = true)
 @Slf4j
 @org.keycloak.adapters.springsecurity.KeycloakConfiguration

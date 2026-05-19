@@ -26,7 +26,7 @@ public class GenerateTransactionDetailsQueueImpl implements GenerateTransactionD
     @Override
     public WithdrawQueue withdrawQueue(TransactionDto withdraw, TransactionStatus status) {
         var queue=new WithdrawQueue();
-        queue.setWithdraw(withdraw);
+        queue.setWithdrawal(withdraw);
         queue.setTransactionDetails(new TransactionDetailsDto(status,TransactionType.WITHDRAW,withdraw.getLocationDto()));
         return queue;
     }

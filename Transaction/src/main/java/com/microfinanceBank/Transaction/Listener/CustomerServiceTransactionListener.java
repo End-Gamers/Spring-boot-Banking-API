@@ -57,7 +57,7 @@ public class CustomerServiceTransactionListener {
     /** WithdrawalQueue 메시지를 Withdraw 엔티티로 변환한다. */
     private Withdraw convertWithdrawQueueToEntity(WithdrawQueue withdrawDto){
         var withdraw=new Withdraw();
-        withdraw=modelMapper.map(withdrawDto.getWithdraw(),Withdraw.class);
+        withdraw=modelMapper.map(withdrawDto.getWithdrawal(),Withdraw.class);
         withdraw.setTransactionDetail(convertTransactionDetailToEntity(withdrawDto.getTransactionDetails()));
         return withdraw;
     }

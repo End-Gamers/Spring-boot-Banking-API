@@ -43,7 +43,7 @@ public class BankServiceImpl implements BankService {
         var balance=account.getAccountBalance();
 
         if (isAccountNotActive(account)) {
-            transactionQueueProducerService.deposit(deposit, TransactionStatus.ERROR);
+            transactionQueueProducerService.deposit(deposit, TransactionStatus.FAILED);
             log.error("account number {} is inactive",account.getAccountNumber());
             throw new AccountNotActive("계좌가 비활성 상태입니다.");
         }
@@ -71,7 +71,7 @@ public class BankServiceImpl implements BankService {
             throw new AccountNotActive("계좌가 비활성 상태입니다.");
         }
         if (hasNotSufficientFunds(balance,withdraw.getAmount())){
-            transactionQueueProducerService.withdraw(withdraw,TransactionStatus.ERROR);
+            transactionQueueProducerService.withdraw(withdraw,TransactionStatus.FAILED);
             log.error("insufficient funds to withdraw amount {} from {}",withdraw.getAmount(),withdraw.getSourceAccount());
             throw new InsufficientException("잔액이 부족합니다.");
         }
@@ -88,7 +88,7 @@ public class BankServiceImpl implements BankService {
     public void transfer(TransferTransactionDto transfer) {
         log.trace("entering method transfer");
 
-        if (transfer.getRecipientAccount().equals(transfer.getSourceAccount())){
+        if (transfer.getDestinationAccount().equals(transfer.getSourceAccount())){
             log.error("You can not send money to yourself with account id {}",transfer.getSourceAccount());
             throw new IllegalStateException("본인 계좌로는 송금할 수 없습니다.");
         }
@@ -98,7 +98,7 @@ public class BankServiceImpl implements BankService {
 
         log.debug("making transfer for account number {}",transfer.getSourceAccount());
 
-        var recipient=accountRepository.findById(transfer.getRecipientAccount())
+        var recipient=accountRepository.findById(transfer.getDestinationAccount())
                 .orElseThrow(()->new NoCustomerExceptions("입력하신 수취 계좌 번호를 찾을 수 없습니다."));
 
         var senderAccountBalance=sender.getAccountBalance();
@@ -106,20 +106,20 @@ public class BankServiceImpl implements BankService {
         var recipientAccountBalance=recipient.getAccountBalance();
 
         if (isAccountNotActive(sender)){
-            transactionQueueProducerService.transfer(transfer,TransactionStatus.ERROR);
+            transactionQueueProducerService.transfer(transfer,TransactionStatus.FAILED);
             log.error("sender with account number {} is inactive",recipient.getAccountNumber());
             throw new AccountNotActive("출금 계좌가 비활성 상태입니다.");
         }
 
         if (isAccountNotActive(recipient)){
-            transactionQueueProducerService.transfer(transfer,TransactionStatus.ERROR);
+            transactionQueueProducerService.transfer(transfer,TransactionStatus.FAILED);
             log.error("recipient with account number {} is inactive",recipient.getAccountNumber());
             throw new AccountNotActive("수취 계좌가 비활성 상태입니다.");
         }
 
         if (hasNotSufficientFunds(senderAccountBalance,transfer.getAmount())){
-            transactionQueueProducerService.transfer(transfer,TransactionStatus.ERROR);
-            log.error("insufficient funds to transfer amount {} from {} to {}",transfer.getAmount(),transfer.getSourceAccount(),transfer.getRecipientAccount());
+            transactionQueueProducerService.transfer(transfer,TransactionStatus.FAILED);
+            log.error("insufficient funds to transfer amount {} from {} to {}",transfer.getAmount(),transfer.getSourceAccount(),transfer.getDestinationAccount());
             throw new InsufficientException("잔액이 부족합니다.");
         }
 
@@ -130,7 +130,7 @@ public class BankServiceImpl implements BankService {
 
         transactionQueueProducerService.transfer(transfer,TransactionStatus.SUCCESS);
 
-        log.info("{} successfully transferred from account {} to {}",transfer.getAmount(),transfer.getSourceAccount(),transfer.getRecipientAccount());
+        log.info("{} successfully transferred from account {} to {}",transfer.getAmount(),transfer.getSourceAccount(),transfer.getDestinationAccount());
 
     }
 
