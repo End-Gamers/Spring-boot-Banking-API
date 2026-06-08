@@ -15,6 +15,7 @@
 7. [역할 및 권한](#역할-및-권한)
 8. [Swagger UI](#swagger-ui-api-문서)
 9. [주요 접속 URL](#주요-접속-url)
+10. [로그 확인](#로그-확인)
 
 ---
 
@@ -30,7 +31,7 @@
 
 | 구분 | 기술 |
 |------|------|
-| **프레임워크** | Spring Boot 2.7, Spring WebFlux |
+| **프레임워크** | Spring Boot 2.6.15, Spring WebFlux |
 | **마이크로서비스** | Spring Cloud Gateway, Eureka, OpenFeign |
 | **인증/인가** | Keycloak 19, OAuth2, JWT |
 | **데이터베이스** | MySQL 8, MongoDB, Redis |
@@ -55,7 +56,7 @@
          ├──────────┬──────────┬──────────┬──────────┐
          ▼          ▼          ▼          ▼          ▼
     Customer   Transaction   Loan    Employee    Issues
-    (8081)      (8084)      (8085)   (8082)     (8083)
+    (8081)      (8084)      (8083)   (8082)     (8085)
          │          │          │
          ▼          ▼          ▼
        MySQL     RabbitMQ   MongoDB
@@ -174,6 +175,34 @@ curl -X POST \
 curl -H "Authorization: Bearer <access_token>" \
   "http://localhost:8765/customer/api/customers"
 ```
+
+### 참고 — 토큰만으로는 호출되지 않는 API가 있습니다 (역할 기반 권한)
+
+대부분의 API는 **유효한 Bearer 토큰만 있으면** 호출할 수 있습니다 (`anyRequest().authenticated()`).
+하지만 일부 엔드포인트는 토큰 검증을 통과해도 **JWT에 특정 역할(Role) 클레임이 없으면 403 Forbidden**이 발생합니다.
+
+**동작 방식**
+
+1. Keycloak이 발급한 JWT의 `realm_access.roles` 클레임에서 역할 목록을 추출 ([RealmRoleConverter.java](Customer/src/main/java/com/microfinanceBank/Customer/Config/RealmRoleConverter.java))
+2. 각 역할 앞에 `ROLE_` 접두사를 붙여 Spring Security 권한(`GrantedAuthority`)으로 변환 (예: `admin` → `ROLE_admin`)
+3. 컨트롤러의 `@RolesAllowed("...")` 어노테이션이 `ROLE_<값>`과 정확히 일치하는 권한을 요구 (대소문자 구분)
+
+**역할이 추가로 필요한 엔드포인트**
+
+| 엔드포인트 | 필요 역할 | 코드 위치 |
+|---|---|---|
+| `GET /customer/api/customers` (전체 고객 조회) | `ADMIN` | [CustomerController.java:61](Customer/src/main/java/com/microfinanceBank/Customer/controller/CustomerController.java#L61) |
+| `GET /customer/api/accounts` (전체 계좌 조회) | `ADMIN` | [AccountController.java:85](Customer/src/main/java/com/microfinanceBank/Customer/controller/AccountController.java#L85) |
+| `PUT /employee/api/make-admin/{id}` (관리자 승격) | `ADMIN` | [EmployeeController.java:66](Employee/src/main/java/com/microfinanceBank/Employee/controller/EmployeeController.java#L66) |
+| `PUT /employee/api/demote-admin/{id}` (관리자 강등) | `ADMIN` | [EmployeeController.java:81](Employee/src/main/java/com/microfinanceBank/Employee/controller/EmployeeController.java#L81) |
+| `POST /employee/api/employee` (직원 등록) | `hr` | [EmployeeController.java:35](Employee/src/main/java/com/microfinanceBank/Employee/controller/EmployeeController.java#L35) |
+| `DELETE /employee/api/employee` (직원 삭제) | `hr` | [EmployeeController.java:51](Employee/src/main/java/com/microfinanceBank/Employee/controller/EmployeeController.java#L51) |
+
+**주의 — 역할명 대소문자 불일치**
+
+[SETUP.md](SETUP.md)의 Keycloak 역할 생성 스크립트는 역할명을 모두 소문자(`admin`, `customer`, `hr`, `manager`, `employee`)로 생성합니다. 그런데 위 표의 `ADMIN` 권한 검사(`@RolesAllowed("ADMIN")`)는 대문자로 되어 있어, Keycloak에서 변환된 권한 `ROLE_admin`(소문자)과 일치하지 않습니다.
+
+→ `customers`/`accounts`/`make-admin`/`demote-admin` 엔드포인트를 호출하려면 Keycloak에 **대문자 `ADMIN`** 역할을 별도로 생성해 사용자에게 부여해야 합니다 (Role Mappings에서 `admin`이 아닌 `ADMIN` 역할을 추가). `hr` 역할을 요구하는 엔드포인트는 SETUP.md에서 생성한 소문자 `hr` 역할 그대로 사용하면 됩니다.
 
 ---
 
@@ -480,6 +509,11 @@ PUT /issue/api/issue-fix?id={불만사항ID}
 | `manager` | 부서 매니저 | 부서 관리 |
 | `employee` | 일반 직원 | 기본 업무 |
 
+> **참고**: 위 표는 [SETUP.md](SETUP.md)의 역할 생성 스크립트가 만드는 역할(전부 소문자) 기준입니다.
+> 다만 일부 ADMIN 전용 엔드포인트는 코드상 대문자 `ADMIN` 권한을 요구하므로, 해당 기능을 사용하려면
+> 별도로 대문자 `ADMIN` 역할을 만들어 부여해야 합니다 — 자세한 내용은
+> [API 사용법의 "역할 기반 권한" 안내](#참고--토큰만으로는-호출되지-않는-api가-있습니다-역할-기반-권한)를 참고하세요.
+
 ### Keycloak에서 사용자 역할 부여 방법
 
 ```
@@ -514,6 +548,44 @@ Swagger UI에서 **Authorize** 버튼을 클릭하고 발급받은 Bearer Token�
 | **Keycloak Realm** | http://localhost:9090/admin/Springboot-bank-microservices/console/ | Realm 직접 접속 |
 | **RabbitMQ 관리** | http://localhost:15672 | 메시지 큐 모니터링 (guest/guest) |
 | **Config Server** | http://localhost:8888 | 중앙 설정 서버 |
+
+---
+
+## 로그 확인
+
+모든 마이크로서비스는 콘솔 출력 외에 파일로도 로그를 저장하며(`logback-spring.xml`), 분산 추적용 상관관계 ID를 함께 기록합니다.
+
+### 로그 파일 위치
+
+각 서비스 디렉터리 아래 `logs/{spring.application.name}/`에 텍스트 로그와 JSON 구조화 로그가 함께 생성됩니다 (일별 + 100MB 단위 자동 롤링, 30일 보관, 총 3GB 캡).
+
+```
+{서비스 디렉터리}/logs/{서비스명}/
+├── {서비스명}.log         # 텍스트 로그 (콘솔과 동일한 패턴)
+└── {서비스명}-json.log    # JSON 구조화 로그 (ELK/Loki 적재용 — LogstashEncoder)
+```
+
+예: `Customer/logs/customer/customer.log`, `Api-gateway/logs/api-gateway/api-gateway-json.log`
+
+### 분산 추적 — traceId / spanId
+
+API Gateway를 거쳐 백엔드 서비스로 이어지는 요청은 Spring Cloud Sleuth(Brave)가 부여한 **`traceId`/`spanId`**로 서로 연결됩니다. 모든 액세스 로그(텍스트·JSON)에 이 값이 함께 기록되므로, 동일한 `traceId`로 검색하면 게이트웨이부터 다운스트림 서비스까지 하나의 요청 흐름을 추적할 수 있습니다.
+
+```bash
+# 텍스트 로그 패턴: [traceId,spanId]
+grep "31d8a7fe8ae48e03" Api-gateway/logs/api-gateway/api-gateway.log Customer/logs/customer/customer.log
+
+# JSON 로그는 jq로 traceId 기준 필터링
+jq 'select(.traceId == "31d8a7fe8ae48e03")' Customer/logs/customer/customer-json.log
+```
+
+### 액세스 로그 형식
+
+요청 메서드·경로·응답 상태코드·처리 시간을 기록합니다.
+
+```
+GET /customer/api/customers -> 200 OK (12ms)
+```
 
 ---
 

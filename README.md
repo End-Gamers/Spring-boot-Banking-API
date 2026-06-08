@@ -3,6 +3,7 @@
 
 ## 목차
 * **시작하기**
+  > 아래 목차의 링크는 이 프로젝트의 원본 저장소(phelumie/Spring-boot-Banking-API)의 설명 페이지로 연결됩니다.
   * [은행 관리 시스템이란?](https://github.com/phelumie/Spring-boot-Banking-API#what-is-a-banking-management-system-all-about)
 * [**이 프로젝트를 선택한 이유?**](https://github.com/phelumie/Spring-boot-Banking-API#why-this-project)
 * [기술 스택](https://github.com/phelumie/Spring-boot-Banking-API#technologies)

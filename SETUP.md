@@ -266,7 +266,7 @@ server.port=8888
 
 # 로컬 git 저장소 사용 (원격 GitHub 대신)
 spring.cloud.config.server.git.cloneOnStart=true
-spring.cloud.config.server.git.uri=file:///Users/seojeongchang/VSProject/Spring-boot-Banking-API/git-localconfig-repo
+spring.cloud.config.server.git.uri=file:///Users/seojeongchang/VSProject/spring-config-local-repo
 spring.cloud.config.server.git.default-label=main
 
 server.tomcat.max-threads=1
@@ -277,18 +277,31 @@ management.endpoint.health.show-details=always
 > **변경 이유**: 원래 설정은 원격 GitHub 저장소(`phelumie/spring-cloud-config`)를 바라보고 있어
 > 외부 인터넷이 없거나 권한이 없는 경우 작동하지 않습니다.
 
-### git-localconfig-repo — Git 저장소 초기화 (최초 1회)
+### 로컬 Config 저장소 생성 (최초 1회)
 
-Config Server가 로컬 디렉터리를 Git으로 읽기 때문에 초기화가 필요합니다:
+Config Server는 `git.uri`에 지정된 경로에 **자체 `.git`을 가진 저장소**가 있어야 합니다.
+저장소 안의 `git-localconfig-repo/` 디렉터리는 부모 프로젝트(이 저장소)의 working tree에
+포함된 일반 폴더이므로, 그 안에서 바로 `git init`을 하면 부모 저장소 안에 중첩 저장소가
+생겨 `git status`가 지저분해지고 충돌이 생길 수 있습니다.
+
+대신 **프로젝트 트리 바깥의 별도 디렉터리**에 설정 파일을 복사해 독립 저장소로 만듭니다:
 
 ```bash
-cd /Users/seojeongchang/VSProject/Spring-boot-Banking-API/git-localconfig-repo
-git init
+mkdir -p /Users/seojeongchang/VSProject/spring-config-local-repo
+cp /Users/seojeongchang/VSProject/Spring-boot-Banking-API/git-localconfig-repo/*.properties \
+   /Users/seojeongchang/VSProject/Spring-boot-Banking-API/git-localconfig-repo/*.yaml \
+   /Users/seojeongchang/VSProject/Spring-boot-Banking-API/git-localconfig-repo/*.yml \
+   /Users/seojeongchang/VSProject/spring-config-local-repo/
+
+cd /Users/seojeongchang/VSProject/spring-config-local-repo
+git init -b main
 git add .
 git commit -m "init config"
 ```
 
-> 이미 완료된 상태라면 이 단계는 생략합니다.
+> 이미 `/Users/seojeongchang/VSProject/spring-config-local-repo`에 커밋된 상태라면 이 단계는 생략합니다.
+> `git-localconfig-repo/` 안의 설정 파일을 수정했다면, 위 `cp` + `git add` + `git commit`을
+> 다시 실행해 별도 저장소에도 반영해야 Config Server가 변경 사항을 읽습니다.
 
 ---
 
@@ -344,7 +357,7 @@ echo "Api-gateway 시작 (PID: $!)"
 
 ```bash
 # 전체 서비스 포트 확인
-for label_port in "Config Server:8888" "Eureka:8761" "Customer:8081" "Transaction:8084" "Loan:8085" "Api-gateway:8765"; do
+for label_port in "Config Server:8888" "Eureka:8761" "Customer:8081" "Transaction:8084" "Loan:8083" "Api-gateway:8765"; do
   label=$(echo $label_port | cut -d: -f1)
   port=$(echo $label_port | cut -d: -f2)
   lsof -i :$port 2>/dev/null | grep -q LISTEN \
@@ -352,6 +365,11 @@ for label_port in "Config Server:8888" "Eureka:8761" "Customer:8081" "Transactio
     || echo "  $label ✗ (아직 기동 중)"
 done
 ```
+
+> **참고 — 로그 파일**: `/tmp/*.log`(콘솔 출력 리다이렉션)과 별개로, 각 서비스는
+> `{서비스 디렉터리}/logs/{서비스명}/`에 텍스트(`.log`)·JSON(`-json.log`) 로그 파일을
+> 자동 롤링 방식으로 저장합니다 (`logback-spring.xml`). 자세한 내용과 분산 추적
+> `traceId` 활용법은 [GUIDE.md의 "로그 확인"](GUIDE.md#로그-확인) 섹션을 참고하세요.
 
 ---
 
@@ -474,9 +492,9 @@ echo "로그 확인: tail -f /tmp/customer.log"
 | Eureka | 8761 | 서비스 디스커버리 |
 | Customer | 8081 | 고객·계좌 관리 |
 | Transaction | 8084 | 입금·출금·송금 |
-| Loan | 8085 | 대출 신청·상환 |
+| Loan | 8083 | 대출 신청·상환 |
 | Employee | 8082 | 직원·지점 관리 |
-| Issues | 8083 | 불만사항 관리 |
+| Issues | 8085 | 불만사항 관리 |
 | Keycloak | 9090 | 인증 서버 |
 | MySQL | 3306 | 관계형 DB |
 | RabbitMQ | 5672 | 메시지 브로커 |
@@ -513,17 +531,51 @@ brew services restart rabbitmq
 
 ---
 
+### 서비스 기동 실패 — `QueuesNotAvailableException` (RabbitMQ 4.x — `transient_nonexcl_queues` 거부)
+
+```
+Caused by: ...QueuesNotAvailableException
+... PRECONDITION_FAILED - Feature `transient_nonexcl_queues` is deprecated
+```
+
+RabbitMQ 4.3.0부터 비durable(`durable=false`) 큐 선언 기능(`transient_nonexcl_queues`)이
+기본적으로 비활성화(deprecated)되어, 코드의 `new Queue("DepositQueue", false)`와 같은
+큐 선언이 거부되며 Customer/Transaction/Loan이 기동 시 크래시합니다.
+
+```bash
+# /opt/homebrew/etc/rabbitmq/rabbitmq.conf 파일에 아래 한 줄 추가 (없으면 새로 생성)
+echo 'deprecated_features.permit.transient_nonexcl_queues = true' \
+  >> /opt/homebrew/etc/rabbitmq/rabbitmq.conf
+
+brew services restart rabbitmq
+```
+
+> **원인**: RabbitMQ 4.x의 deprecated-features 정책 변경으로 비durable 큐 생성이 기본
+> 차단됩니다. 위 설정을 추가해 해당 기능을 다시 허용해야 기존 코드의 큐 선언이 정상
+> 동작합니다. (위 항목의 `missing-queues-fatal=false`와는 별개의 원인이므로, 그 옵션을
+> 추가해도 이 문제는 해결되지 않습니다.)
+
+---
+
+### Config Server 기동 실패 (`IllegalStateException: No .git at file://...`)
+
+`spring.cloud.config.server.git.uri`가 가리키는 경로에 `.git`이 없는 경우 발생합니다.
+`git-localconfig-repo/`는 부모 프로젝트 working tree 안의 일반 폴더일 뿐 자체 저장소가
+아니므로, 반드시 [5단계](#5단계-설정-파일-수정)에서 만든 별도 저장소
+(`/Users/seojeongchang/VSProject/spring-config-local-repo`)를 가리켜야 합니다. 해당 경로에
+`.git`이 없다면 5단계의 "로컬 Config 저장소 생성" 절차를 다시 수행하세요.
+
 ### Config Server 404 오류 (`/customer/dev` not found)
 
 ```bash
-# git-localconfig-repo의 브랜치 확인
-cd /Users/seojeongchang/VSProject/Spring-boot-Banking-API/git-localconfig-repo
+# 로컬 config 저장소의 브랜치 확인
+cd /Users/seojeongchang/VSProject/spring-config-local-repo
 git branch
 ```
 
-브랜치가 `main`이 아닌 `master`라면 `application.properties`를 수정:
+브랜치가 `main`이 아니라면 `application.properties`의 `default-label`을 실제 브랜치명에 맞게 수정:
 ```properties
-spring.cloud.config.server.git.default-label=main  # 또는 master
+spring.cloud.config.server.git.default-label=main  # 실제 브랜치명과 일치해야 함
 ```
 
 > **원인**: Git 2.x 이후 기본 브랜치가 `master`에서 `main`으로 변경되었습니다.
@@ -543,6 +595,22 @@ java -jar xxx.jar \
 ```
 
 > **원인**: 서비스 시작 시 상대 서비스가 선언하는 큐가 아직 생성되지 않아 발생합니다.
+
+---
+
+### 빌드 실패 — `jackson-datatype-jsr310`/`jackson-datatype-hibernate5` 의존성 해석 불가
+
+```
+[ERROR] ...jackson-datatype-jsr310:jar:2.13.4.2 was not found in https://repo.maven.apache.org/maven2
+```
+
+`Customer`, `Transaction`, `Loan`, `Employee`의 `pom.xml`에서 해당 두 아티팩트의 버전을
+`2.13.4`로 지정해야 합니다. `2.13.4.2`는 `jackson-databind`에만 존재하는 보안 패치
+버전이며, `jackson-datatype-jsr310`/`jackson-datatype-hibernate5`는 `2.13.4`까지만
+Maven Central에 존재합니다.
+
+> **원인**: Spring Boot 2.6.6 → 2.6.15 업그레이드 커밋에서 `jackson-databind`의 패치
+> 버전(`2.13.4.2`)을 다른 jackson 모듈에도 동일하게 적용하는 실수가 있었습니다.
 > 이 옵션을 추가하면 큐가 없어도 서비스가 정상 기동되고, 이후 큐가 생성되면 자동으로 연결됩니다.
 
 ---
